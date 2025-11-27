@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 15/11/2025.
-//
-
 #ifndef CHIPE_APPLICATION_H
 #define CHIPE_APPLICATION_H
 
@@ -40,11 +36,19 @@ private:
     std::atomic_bool m_runDraw{ false };
     std::atomic_bool m_runEmu{ false };
 
+    std::atomic_bool m_pausedInput{ false };
+    std::atomic_bool m_pausedDraw{ false };
+    std::atomic_bool m_pausedEmu{ false };
+
 
     bool m_step{false};
     std::set<u16> m_breakPoints;
     u32 inst_c{0};
     u32 m_ips{0};
+
+    std::vector<u8> m_currentProgramm;
+    
+    std::array<u32, 16> m_keyBind;
 
     using clock = std::chrono::steady_clock;
     using duration = std::chrono::duration<double, std::milli>;
@@ -72,6 +76,7 @@ private:
     void DrawEmu();
     void Emulate();
 
+    void loadProgramm(fs::path program_path);
 };
 
 

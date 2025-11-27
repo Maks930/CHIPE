@@ -158,13 +158,17 @@ void Window::precessEvents() {
 void Window::processInput() {
 
     for (int i(0); i < 1024; ++i) {
-        const bool flag = m_keyDown.test(i);
-        if (flag && m_pFrames[i] == m_frame) {
-            pushEvent(static_cast<Event>(Event::JustKeyPressed{i}));
+        const bool currentlyDown = m_keyDown.test(i);
+        const bool changedThisFrame = (m_pFrames[i] == m_frame);
+
+        if (currentlyDown) {
+            pushEvent(changedThisFrame ? Event(Event::JustKeyPressed{ i }) : Event(Event::KeyPressed{ i }));
         }
-        else if (flag) {
-            pushEvent(static_cast<Event>(Event::KeyPressed{i}));
+        else {
+            pushEvent(changedThisFrame ? Event(Event::JustKeyReleased{ i }) : Event(Event::KeyReleased{ i }));
         }
+
+        
     }
 }
 

@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 27/10/2025.
-//
-
 #ifndef CHIPE_CHIP8_H
 #define CHIPE_CHIP8_H
 #include <cstring>
@@ -25,8 +21,8 @@ private:
     std::stack<u16> stack;
     u8 videMemory[64*48];
 
-    u8 dT;
-    u8 sD;
+    u8 dT{ 255 };
+    u8 sD{ 255 };
 
     bool key_layout[16];
 
@@ -110,7 +106,8 @@ public:
     void resetRegisters();
     void resetMemory();
     void resetProgramCounter();
-    void resetVideoMemory(){std::memset(videMemory, 0, 64*48);};
+    void resetVideoMemory();
+    void updateTimers();
 
     static std::vector<std::pair<std::pair<u16,u16>, std::string>> disAsmProg(const u8* prog, u32 size);
 

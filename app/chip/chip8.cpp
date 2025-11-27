@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 27/10/2025.
-//
-
 #include "chip8.h"
 
 #include <chrono>
@@ -16,18 +12,27 @@
 #define SW 64
 #define SH 48
 
-#define NEXT {dT -=1; sD -=1; PC+=2;}
+#define NEXT {PC+=2;}
 #define SKIP {NEXT; PC+=2;}
 
 
 
 chip8::chip8() {
-    std::memset(memory, 0, 4096);
+    //std::memset(memory, 0, 4096);
+    std::fill(memory, memory + 4096, 0);
+
     //std::memcpy(memory+0x50, m_chip8_fontset, 80);
     std::copy(m_chip8_fontset, m_chip8_fontset+80, memory+0x50);
-    std::memset(V, 0, 16);
-    std::memset(videMemory, 0, SW*SH);
-    std::memset(key_layout, 0, 16);
+
+    //std::memset(V, 0, 16);
+    std::fill(V, V + 16, 0);
+
+    //std::memset(videMemory, 0, SW*SH);
+    std::fill(videMemory, videMemory + (SW * SH), 0);
+
+    //std::memset(key_layout, 0, 16);
+    std::fill(key_layout, key_layout + 16, 0);
+
     dT = 0;
     sD = 0;
     I=0;
@@ -354,7 +359,8 @@ std::pair<u16, u16> chip8::emulateCycle() {
         case 0x0000:
             switch (opcode & 0x0FFF) {
             case 0x00E0:
-                    std::memset(videMemory, 0, SW*SH);
+                    //std::memset(videMemory, 0, SW*SH);
+                    std::fill(videMemory, videMemory + (SW * SH), 0);
                     break;
                 case 0x00EE: // PC to top of the stack
                     PC = stack.top();
@@ -660,7 +666,8 @@ std::pair<u16, u16> chip8::emulateCycle() {
 }
 
 void chip8::loadProgram(const u8 *program, const u32 size) {
-    std::memcpy(memory+0x200, program, size);
+    //std::memcpy(memory+0x200, program, size);
+    std::copy(program, program+size, memory+0x200);
 }
 
 void chip8::emulate(const bool f) {
@@ -670,7 +677,12 @@ void chip8::emulate(const bool f) {
 }
 
 void chip8::reset() {
-    std::memset(key_layout, 0, 16);
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        //std::memset(key_layout, 0, 16);
+        std::fill(key_layout, key_layout + 16, 0);
+    }
+
     resetMemory();
     resetStack();
     resetRegisters();
@@ -679,24 +691,42 @@ void chip8::reset() {
 
 void chip8::resetStack() {
     //CLEAR STACK
+    std::lock_guard<std::mutex> lock(mutex);
     stack = std::stack<u16>();
 }
 
 void chip8::resetRegisters() {
-    std::memset(V, 0, 16);
+    std::lock_guard<std::mutex> lock(mutex);
+    //std::memset(V, 0, 16);
+    std::fill(V, V + 16, 0);
     I = 0;
-    dT = 0;
-    sD = 0;
+    dT = 255;
+    sD = 255;
 }
 
 void chip8::resetMemory() {
-
-    std::memset(memory, 0, 4096);
+    std::lock_guard<std::mutex> lock(mutex);
+    //std::memset(memory, 0, 4096);
+    std::fill(memory, memory + 4096, 0);
     std::copy(m_chip8_fontset, m_chip8_fontset + 80, memory + 0x50);
 }
 
 void chip8::resetProgramCounter() {
+    std::lock_guard<std::mutex> lock(mutex);
     PC= 0x200;
+}
+
+void chip8::resetVideoMemory()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    std::fill(videMemory, videMemory + (SW * SH), 0);
+}
+
+void chip8::updateTimers()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    sD--;
+    dT--;
 }
 
 std::vector<std::pair<std::pair<u16,u16>, std::string>> chip8::disAsmProg(const u8 *prog, u32 size) {

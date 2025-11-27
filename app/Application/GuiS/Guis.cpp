@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 15/11/2025.
-//
-
 #include <Application/GuiS/Guis.h>
 #include <imgui.h>
 #include <utils/utils.h>
@@ -149,6 +145,33 @@ void Guis::DrawEmulatorMemoryTable() {
     ImGui::End();
 }
 
+void Guis::DrawKeyTableMenu(std::array<bool, 16> layout)
+{
+    ImGui::Begin("Keyboard Layout");
+    if (ImGui::BeginTable("Keyboard Layout Table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+        // Заголовки колонок
+        ImGui::TableSetupColumn("Keys");
+        ImGui::TableSetupColumn("Pressed");
+
+        ImGui::TableHeadersRow();
+
+        for (size_t i = 0; i < layout.size(); ++i) {
+            ImGui::TableNextRow();
+
+            // Индекс
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("%x", i);
+
+            // Десятичное значение
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%i", layout.at(i));
+        }
+        ImGui::EndTable();
+
+    }
+    ImGui::End();
+}
+
 void Guis::DrawControlMenu(bool& isRunning, bool& nextStep) {
     ImGui::Begin("Controll");
 
@@ -162,6 +185,31 @@ void Guis::DrawControlMenu(bool& isRunning, bool& nextStep) {
         nextStep = true;
     }
 
+    ImGui::End();
+}
+
+void Guis::DrawBreakPointsMenu(std::set<u16>& breakPoints)
+{
+    ImGui::Begin("Break Points");
+    int id = 0;
+    for (const auto& point : breakPoints) {
+        ImGui::PushID(id);
+        ImGui::Text("0x%04X", point);
+        ImGui::PopID();
+        id++;
+    }
+    ImGui::End();
+}
+
+void Guis::DrawKeyBindMenu(std::array<u32, 16>& keyBind)
+{
+    if (ImGui::Begin("Keybinds")) {
+        // Loop through your keybinds and display them
+        for (auto& item : keyBind) {
+            ImGui::Text("0x%04X", item);
+            ImGui::SameLine();
+        }
+    }
     ImGui::End();
 }
 
@@ -193,7 +241,7 @@ void Guis::DisAsmMenu(std::vector<std::pair<std::pair<u16, u16>, std::string>> p
         }
         ImGui::PopID();
         ImGui::SameLine();
-        ImGui::Text("0x%04X -> 0x%04X:\t%s", techData.first, techData.second, dism.c_str());
+        ImGui::Text("0x%04X: (0x%04X)\t%s", techData.first, techData.second, dism.c_str());
 
         if (f || dism == "UNKNOWN" || contains) {
             ImGui::PopStyleColor();

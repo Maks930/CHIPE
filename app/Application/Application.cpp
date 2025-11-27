@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+﻿#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <cstring>
@@ -15,7 +15,8 @@
 
 #include <chip/chip8.h>
 
-const u8 prog[] = {0x00,0x00, 0x61,0x00, 0x71,0x01, 0xA2,0x10, 0xD1,0x01, 0x31,0x05, 0x12,0x04, 0x12,0x02, 0xFF,0xFF};
+//const u8 prog[] = {0x00,0x00, 0x61,0x00, 0x71,0x01, 0xA2,0x10, 0xD1,0x01, 0x31,0x05, 0x12,0x04, 0x12,0x02, 0xFF,0xFF};
+const u8 prog[] = { 0x12, 0x06, 0x82, 0x10, 0x00, 0xEE, 0x61, 0x05, 0x71, 0x01, 0x22, 0x02, 0x12, 0x08};
 
 
 void Application::_initWindow() {
@@ -41,13 +42,27 @@ void Application::_initGui() {
 
     ImGui_ImplGlfw_InitForOpenGL(m_window->getHandle(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    std::fill(m_keyBind.begin(), m_keyBind.end(), 0);
+
+    m_keyBind = {
+		//0         //1         //2         //3
+        GLFW_KEY_X, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3,
+		//4         //5         //6         //7
+        GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_E, GLFW_KEY_A,
+		//8         //9         //A         //B
+        GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_Z, GLFW_KEY_C,
+		//C         //D         //E         //F
+        GLFW_KEY_4, GLFW_KEY_R, GLFW_KEY_F, GLFW_KEY_V
+    };
+
 }
 
 void Application::_initEmulator() {
 	m_drawSpace.fill(0);
     {
-        const auto m_drawSpaceE = reinterpret_cast<u32*>(m_drawSpace.data());
-        std::memset(m_drawSpaceE, 0xFF'FF'FF'FF, 64*48*4);
+        auto m_drawSpaceE = reinterpret_cast<u32*>(m_drawSpace.data());        
+        std::fill(m_drawSpaceE, m_drawSpaceE + (64 * 48), 0xFF'FF'FF'FF);
         glGenTextures(1, &renderTextureId);
         glBindTexture(GL_TEXTURE_2D, renderTextureId);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -56,7 +71,6 @@ void Application::_initEmulator() {
     }
 
     m_chip8 = std::make_shared<chip8>();
-    m_chip8->loadProgram(prog, 9*2);
 }
 
 void Application::_terminateGui() {
@@ -85,12 +99,17 @@ void Application::_drawGui() {
     
     Guis::DisAsmMenu(
         chip8::disAsmProg(
-            prog,
-            9*2
+            m_chip8->getMemory().begin()+0x200,
+            4096-0x200
         ),
         m_chip8->getPC(),
         m_breakPoints
     );
+
+    Guis::DrawKeyBindMenu(m_keyBind);
+    Guis::DrawKeyTableMenu(m_chip8->getKeyLayout());
+
+    //Guis::DrawBreakPointsMenu(m_breakPoints);
 
     bool isRunning = m_running;
     Guis::DrawControlMenu(isRunning, m_step);
@@ -102,11 +121,28 @@ void Application::_drawGui() {
 
 void Application::Input() {
     while (m_window->isOpen() && m_runInput) {
+        if (m_pausedInput) {
+            continue;
+        }
         while (std::optional e = m_window->pollEvent()) {
             if (e->is<bde::system::Event::Closed>()) {
                 m_window->close();
             }
 
+            if (const auto key = e->get_if<bde::system::Event::JustKeyReleased>()) {
+                i8 any_pressed = [](u32 code, std::array<u32, 16>& arr) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        if (arr.at(i) == code) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                    }(key->code, m_keyBind);
+
+                if (any_pressed != -1) {
+                    m_chip8->relKey((u8)any_pressed);
+                }
+            }
             if (const auto key = e->get_if<bde::system::Event::JustKeyPressed>()) {
                 switch (key->code) {
                     case GLFW_KEY_ESCAPE:
@@ -115,17 +151,38 @@ void Application::Input() {
                     case GLFW_KEY_TAB:
                         m_running = !m_running;
                         break;
+                   case GLFW_KEY_F2:
+                        m_running = false;
+                        m_chip8->reset();
+                        m_currentProgramm.clear();
+                        break;
                     default:
                         break;
                 }
+
+                i8 any_pressed = [](u32 code, std::array<u32, 16>& arr) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        if (arr.at(i) == code) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                }(key->code, m_keyBind);
+
+                if (any_pressed != -1) {
+                    m_chip8->pressKey((u8)any_pressed);
+                }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
 
 void Application::DrawEmu() {
     while (m_runDraw) {
+        if (m_pausedDraw) {
+            continue;
+        }
         const auto m_drawSpaceE = reinterpret_cast<u32*>(m_drawSpace.data());
 
         auto vm = m_chip8->getVideoMemory();
@@ -149,6 +206,9 @@ void Application::Emulate() {
     auto next_time = clock::now() + target_interval;
 
     while (m_window->isOpen() && m_runEmu) {
+        if (m_pausedEmu) {
+            continue;
+        }
         if (cur_target_frequency != m_settings.target_ips) {
             cur_target_frequency = m_settings.target_ips;
             target_interval = std::chrono::duration<double>(1.0 / cur_target_frequency);
@@ -164,9 +224,35 @@ void Application::Emulate() {
         }
         std::this_thread::sleep_until(next_time);
         next_time += target_interval;
-
+        m_chip8->updateTimers();
 
     }
+}
+
+void Application::loadProgramm(fs::path program_path)
+{
+
+    m_running = false;
+    m_pausedDraw = true;
+    m_pausedEmu = true;
+
+    std::ifstream file(program_path, std::ios::binary);
+    
+    file.seekg(0, std::ifstream::end);
+    const u32 size = file.tellg();
+    file.seekg(0, std::ifstream::beg);
+
+    m_currentProgramm.resize(size);
+	file.read(reinterpret_cast<char*>(m_currentProgramm.data()), size);
+
+    file.close();
+
+    m_chip8->loadProgram(m_currentProgramm.data(), m_currentProgramm.size());
+
+    m_pausedDraw = false;
+    m_pausedEmu = false;
+
+
 }
 
 Application::Application(int argc, char **argv) {
@@ -211,6 +297,8 @@ int Application::exec() {
     m_runInput = true;
     m_runEmu = true;
     m_runDraw = true;
+
+    loadProgramm("./roms/games/PONG2");
 
     auto start = clock::now();
     auto end = clock::now();
