@@ -20,4 +20,11 @@ struct settings {
     u32 target_ips{750};
 };
 
+struct ProgInfo {
+    std::string title;
+    std::string path;
+    u32 size;
+    u32 insts;
+};
+
 #endif //CHIPE_TYPES_H

@@ -21,8 +21,8 @@ private:
     std::stack<u16> stack;
     u8 videMemory[64*48];
 
-    u8 dT{ 255 };
-    u8 sD{ 255 };
+    u8 m_delayTimer{ 255 };
+    u8 m_soundTimer{ 255 };
 
     bool key_layout[16];
 
@@ -71,8 +71,8 @@ public:
         return I;
     }
     [[nodiscard]] u16 getPC() const { return PC; }
-    [[nodiscard]] u8 getDT() const { return dT; }
-    [[nodiscard]] u8 getST() const { return sD; }
+    [[nodiscard]] u8 getDT() const { return m_delayTimer; }
+    [[nodiscard]] u8 getST() const { return m_soundTimer; }
     [[nodiscard]] std::array<bool,16> getKeyLayout() {
         std::lock_guard<std::mutex> lock(mutex);
         return std::to_array(key_layout);
@@ -100,6 +100,10 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         key_layout[key] = !key_layout[key];
     };
+
+    [[nodiscard]] bool playeSound() {
+        return m_soundTimer > 0;
+    }
 
     void reset();
     void resetStack();

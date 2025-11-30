@@ -14,8 +14,10 @@ add_custom_target(copy_data
         COMMENT "Copying data"
 )
 
-add_executable(CHIPE main.cpp ${sources} Application/GuiS/Guis.cpp)
-target_link_libraries(CHIPE BadEngine fmt::fmt imgui libglew_shared glfw ${PRIVATE_LINKED_LIBS})
+
+
+add_executable(CHIPE main.cpp ${sources} Application/GuiS/Guis.cpp Application/AudioEngine/AEngine.cpp)
+target_link_libraries(CHIPE BadEngine fmt::fmt imgui libglew_shared glfw OpenAL::OpenAL ${PRIVATE_LINKED_LIBS})
 add_dependencies(CHIPE copy_data)
 include_directories(.)
 

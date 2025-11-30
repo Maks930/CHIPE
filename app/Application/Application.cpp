@@ -14,6 +14,9 @@
 #include <Application/GuiS/Guis.h>
 
 #include <chip/chip8.h>
+#include <Application/AudioEngine/AEngine.h>
+
+
 
 //const u8 prog[] = {0x00,0x00, 0x61,0x00, 0x71,0x01, 0xA2,0x10, 0xD1,0x01, 0x31,0x05, 0x12,0x04, 0x12,0x02, 0xFF,0xFF};
 const u8 prog[] = { 0x12, 0x06, 0x82, 0x10, 0x00, 0xEE, 0x61, 0x05, 0x71, 0x01, 0x22, 0x02, 0x12, 0x08};
@@ -28,6 +31,11 @@ void Application::_initWindow() {
             bde::system::Window::WinSize(20'000, 20'000)
             )
         );
+
+    SoundEngine& e = SoundEngine::instance();
+    if (e.init()) {
+        e.generateAndLoadSineWave("chip_tone", 410.0f, 0.1f, 0.3f, 22700);
+    }
 }
 
 void Application::_initGui() {
@@ -107,9 +115,37 @@ void Application::_drawGui() {
     );
 
     Guis::DrawKeyBindMenu(m_keyBind);
-    Guis::DrawKeyTableMenu(m_chip8->getKeyLayout());
+    //Guis::DrawKeyTableMenu(m_chip8->getKeyLayout());
 
     //Guis::DrawBreakPointsMenu(m_breakPoints);
+
+    Guis::DrawProgramLoadMenu(m_progInfo, [this](fs::path path) {
+        this->loadProgramm(path);
+    });
+
+    Guis::DrawResetMenu([this](bool mem, bool regs, bool video) {
+        m_pausedEmu = true;
+        m_pausedDraw = true;
+
+        if (mem) {
+            m_chip8->resetMemory();
+        }
+
+        if (regs) {
+            m_chip8->resetRegisters();
+            m_chip8->resetStack();
+            m_chip8->resetProgramCounter();
+        }
+
+        if (video) {
+            m_chip8->resetVideoMemory();
+        }
+
+        m_pausedEmu = false;
+        m_pausedDraw = false;
+    });
+
+    Guis::DrawMemoryMap(m_chip8->getMemory());
 
     bool isRunning = m_running;
     Guis::DrawControlMenu(isRunning, m_step);
@@ -202,10 +238,11 @@ void Application::DrawEmu() {
 void Application::Emulate() {
     auto cur_target_frequency = m_settings.target_ips;
     std::chrono::duration<double> target_interval(1.0 / cur_target_frequency);
-
+    
     auto next_time = clock::now() + target_interval;
-
+    
     while (m_window->isOpen() && m_runEmu) {
+       
         if (m_pausedEmu) {
             continue;
         }
@@ -213,7 +250,7 @@ void Application::Emulate() {
             cur_target_frequency = m_settings.target_ips;
             target_interval = std::chrono::duration<double>(1.0 / cur_target_frequency);
         }
-
+        
         if (m_breakPoints.contains(m_chip8->getPC())) {
             m_running = false;
         }
@@ -226,7 +263,16 @@ void Application::Emulate() {
         next_time += target_interval;
         m_chip8->updateTimers();
 
+        if (m_chip8->playeSound()) {
+            playSound();
+        }
     }
+}
+
+void Application::playSound()
+{
+    fmt::print("Sound Played\n");
+    SoundEngine::instance().playSound("chip_tone", false);
 }
 
 void Application::loadProgramm(fs::path program_path)
@@ -235,6 +281,7 @@ void Application::loadProgramm(fs::path program_path)
     m_running = false;
     m_pausedDraw = true;
     m_pausedEmu = true;
+
 
     std::ifstream file(program_path, std::ios::binary);
     
@@ -248,6 +295,12 @@ void Application::loadProgramm(fs::path program_path)
     file.close();
 
     m_chip8->loadProgram(m_currentProgramm.data(), m_currentProgramm.size());
+    Guis::InitMemDumpMenu();
+
+    m_progInfo.title = program_path.filename().string();
+    m_progInfo.path = program_path.string();
+    m_progInfo.size = size;
+    m_progInfo.insts = size / 2;
 
     m_pausedDraw = false;
     m_pausedEmu = false;
@@ -297,8 +350,7 @@ int Application::exec() {
     m_runInput = true;
     m_runEmu = true;
     m_runDraw = true;
-
-    loadProgramm("./roms/games/PONG2");
+        
 
     auto start = clock::now();
     auto end = clock::now();

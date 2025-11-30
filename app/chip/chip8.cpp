@@ -33,8 +33,8 @@ chip8::chip8() {
     //std::memset(key_layout, 0, 16);
     std::fill(key_layout, key_layout + 16, 0);
 
-    dT = 0;
-    sD = 0;
+    m_delayTimer = 0;
+    m_soundTimer = 0;
     I=0;
     PC=0x200;
 }
@@ -227,7 +227,7 @@ chip8::~chip8()
 //         case 0xF000: //F-page
 //             switch (opcode & 0x00FF) {
 //                 case 0x0007: // Fx07 LD Vx, DT
-//                     V[(opcode & 0x0F00) >> 8] = dT;
+//                     V[(opcode & 0x0F00) >> 8] = m_delayTimer;
 //                     NEXT; return ret_val;
 //                 case 0x000A: // Fx0A LD Vx, K
 //                 {
@@ -540,7 +540,7 @@ std::pair<u16, u16> chip8::emulateCycle() {
         case 0xF000: //F-page
             switch (opcode & 0x00FF) {
                 case 0x0007: // Fx07 LD Vx, DT
-                    V[(opcode & 0x0F00) >> 8] = dT;
+                    V[(opcode & 0x0F00) >> 8] = m_delayTimer;
                     break;
                 case 0x000A: // Fx0A LD Vx, K
                 {
@@ -622,8 +622,10 @@ std::pair<u16, u16> chip8::emulateCycle() {
                 }
                     break;
                 case 0x0015: // Fx15 LD DT, Vx
+                    m_delayTimer = V[(opcode & 0x0F00) >> 8];
                     break;
                 case 0x0018: // Fx18 LD ST, Vx
+                    m_soundTimer = V[(opcode & 0x0F00) >> 8];
                     break;
                 case 0x001E: // Fx1E ADD I, Vx
                     I += V[(opcode & 0x0F00) >> 8];
@@ -700,8 +702,8 @@ void chip8::resetRegisters() {
     //std::memset(V, 0, 16);
     std::fill(V, V + 16, 0);
     I = 0;
-    dT = 255;
-    sD = 255;
+    m_delayTimer = 0;
+    m_soundTimer = 0;
 }
 
 void chip8::resetMemory() {
@@ -725,8 +727,13 @@ void chip8::resetVideoMemory()
 void chip8::updateTimers()
 {
     std::lock_guard<std::mutex> lock(mutex);
-    sD--;
-    dT--;
+    if (m_soundTimer > 0) {
+        m_soundTimer--;
+    }
+
+    if (m_delayTimer > 0) {
+        m_delayTimer--;
+    }
 }
 
 std::vector<std::pair<std::pair<u16,u16>, std::string>> chip8::disAsmProg(const u8 *prog, u32 size) {

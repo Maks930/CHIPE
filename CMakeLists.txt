@@ -14,10 +14,17 @@ FetchContent_Declare(
         GIT_PROGRESS    TRUE
 )
 
+FetchContent_Declare(
+        openal
+        GIT_REPOSITORY  https://github.com/kcat/openal-soft
+        GIT_TAG         1.24.3
+        GIT_PROGRESS    TRUE
+)
+
 
 set(CMAKE_CXX_STANDARD 20)
 
-FetchContent_MakeAvailable(fmt)
+FetchContent_MakeAvailable(fmt openal)
 
 set(GLM_ENABLE_CXX_20 ON)
 

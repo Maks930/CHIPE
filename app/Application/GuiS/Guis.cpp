@@ -3,7 +3,16 @@
 #include <utils/utils.h>
 #include <imfilebrowser.h>
 
-ImGui::FileBrowser fileDialog;
+ImGui::FileBrowser Guis::m_fd_roms;
+ImGui::FileBrowser Guis::m_fd_settings;
+MemoryEditor Guis::mem_edit;
+
+
+void Guis::InitMemDumpMenu()
+{
+    mem_edit.ReadOnly = true;
+    mem_edit.GotoAddr = 0x200;
+}
 
 void Guis::DrawInfoMenu(const char *label, u32 target_ips, const double fps_count, const u32 ips_count) {
     ImGui::Begin(label);
@@ -23,6 +32,7 @@ void Guis::RenderSpace(const u32 id, const float w, const float h) {
 
 void Guis::DrawSettingsMenu(settings *data) {
     ImGui::Begin("Settings");
+    
 
     float bg[4] = {
         static_cast<float>((data->background_color & 0x00'00'00'FF))/0xFF,
@@ -61,20 +71,20 @@ void Guis::DrawSettingsMenu(settings *data) {
 
 
     if (ImGui::Button("Load")) {
-        fileDialog.SetTitle("Select settings file");
-        fileDialog.SetTypeFilters({".ces"});
-        fileDialog.Open();
+        m_fd_settings.SetTitle("Select settings file");
+        m_fd_settings.SetTypeFilters({".ces"});
+        m_fd_settings.Open();
     }
 
     ImGui::End();
-    fileDialog.Display();
+    m_fd_settings.Display();
 
-    if (fileDialog.HasSelected()) {
+    if (m_fd_settings.HasSelected()) {
 
-        loadSettingFrom(*data, fs::path(fileDialog.GetSelected().string()));
+        loadSettingFrom(*data, fs::path(m_fd_settings.GetSelected().string()));
         
 
-        fileDialog.ClearSelected();
+        m_fd_settings.ClearSelected();
     }
 }
 
@@ -136,12 +146,6 @@ void Guis::DrawEmulatorPointersTable(std::vector<std::pair<std::string, u32>> da
         ImGui::EndTable();
 
     }
-    ImGui::End();
-}
-
-
-void Guis::DrawEmulatorMemoryTable() {
-    ImGui::Begin("Memory Dump");
     ImGui::End();
 }
 
@@ -211,6 +215,103 @@ void Guis::DrawKeyBindMenu(std::array<u32, 16>& keyBind)
         }
     }
     ImGui::End();
+}
+
+void Guis::DrawProgramLoadMenu(ProgInfo& info, std::function<void(fs::path)> callback)
+{
+    ImGui::Begin("Program Loader");
+    
+    if (ImGui::BeginTable("Program Info", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+
+        ImGui::TableHeadersRow();
+
+        {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Name");
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%s", info.title.c_str());
+        }
+
+        {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Size");
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%u", info.size);
+        }
+
+        {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Instructions");
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text("%u", info.insts);
+        }
+
+        ImGui::EndTable();
+    }
+     
+    
+    if (ImGui::Button("Load Program")) {
+        m_fd_roms.SetTitle("Select CHIP-8 Program");
+        m_fd_roms.SetTypeFilters({".ch8", ".c8", ".rom", ".bin", ".*"});
+        m_fd_roms.Open();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reaload Current Program")) {
+        if (callback != nullptr && !info.path.empty()) {
+            if (fs::exists(info.path) && fs::is_regular_file(info.path))
+                callback(info.path);
+        }
+    }
+
+    ImGui::End();
+    m_fd_roms.Display();
+
+    if (m_fd_roms.HasSelected() && callback != nullptr) {
+        callback(m_fd_roms.GetSelected());
+		m_fd_roms.ClearSelected();
+    }
+}
+
+void Guis::DrawResetMenu(std::function<void(bool, bool, bool)> callback)
+{
+    ImGui::Begin("Reset Menu");
+    bool resetMem = false;
+    bool resetRegs = false;
+    bool resetVideo = false;
+
+    if (ImGui::Button("Reset Registers")) {
+        resetRegs = true;
+    }
+
+    if (ImGui::Button("Reset Memory")) {
+        resetMem = true;
+    }
+    
+    if (ImGui::Button("Reset Video Memory")) {
+        resetVideo = true;
+    }
+
+    if (ImGui::Button("Reset All")) {
+        resetVideo = true;
+        resetMem = true;
+        resetRegs = true;
+    }
+
+    callback(resetMem, resetRegs, resetVideo);
+    ImGui::End();
+}
+
+
+void Guis::DrawMemoryMap(std::array<u8, 4096> memory)
+{
+    void* dump = reinterpret_cast<void*>(memory.data());
+    mem_edit.DrawWindow("Memory Dump", dump, 4096);
 }
 
 void Guis::DisAsmMenu(std::vector<std::pair<std::pair<u16, u16>, std::string>> program, u32 PC, std::set<u16>& breakPoints) {

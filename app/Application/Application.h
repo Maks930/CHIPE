@@ -9,10 +9,10 @@
 #include <Types.h>
 #include <set>
 #include <array>
+#include <cstdlib>
 
 
 class chip8;
-
 
 class Application {
 private:
@@ -46,6 +46,13 @@ private:
     u32 inst_c{0};
     u32 m_ips{0};
 
+    ProgInfo m_progInfo{
+        .title = "NO PROGRAM",
+        .path = "NO_PATH",
+        .size=0,
+        .insts=0
+    };
+
     std::vector<u8> m_currentProgramm;
     
     std::array<u32, 16> m_keyBind;
@@ -75,6 +82,8 @@ private:
     void Input();
     void DrawEmu();
     void Emulate();
+
+    void playSound();
 
     void loadProgramm(fs::path program_path);
 };
