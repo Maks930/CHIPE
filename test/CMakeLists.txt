@@ -11,4 +11,7 @@ target_link_libraries(basic_tests INTERFACE
 )
 
 add_executable(PreprocessorTest preproctest.cpp)
+add_executable(LexerTest lexertest.cpp)
+
 target_link_libraries(PreprocessorTest basic_tests cas_lib)
+target_link_libraries(LexerTest basic_tests cas_lib)

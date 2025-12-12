@@ -15,8 +15,11 @@ bool SoundEngine::init()
     alcMakeContextCurrent(context);
     checkAlError("Context creation");
 
-    m_sources.resize(16);
-    alGenSources(m_sources.size(), m_sources.data());
+    //m_sources.resize(16);
+    //alGenSources(m_sources.size(), m_sources.data());
+    alGenSources(1, &source);
+    
+    
     checkAlError("Source generation");
 
     return true;
@@ -24,10 +27,11 @@ bool SoundEngine::init()
 
 void SoundEngine::shotdown()
 {
-    for (ALuint source : m_sources) {
-        alSourceStop(source);
-    }
-    alDeleteSources(m_sources.size(), m_sources.data());
+
+    alSourceStop(1);
+
+    //alDeleteSources(m_sources.size(), m_sources.data());
+    alDeleteSources(1, &source);
 
     for (auto const& [key, val] : m_soundBuffers) {
         alDeleteBuffers(1, &val);
@@ -76,12 +80,11 @@ void SoundEngine::generateAndLoadSineWave(const std::string& name, float frequen
 
 void SoundEngine::playSound(const std::string& name, bool loop)
 {
-    //ALuint source = findFreeSources();
-    /*if (source == 0) {
-        fmt::print("Failed to find a free audio source.\n");
+    i32 state;
+    alGetSourcei(1, AL_SOURCE_STATE, &state);
+    if (state == AL_PLAYING) {
         return;
-    }*/
-    alSourceStop(1);
+    }
     alSourcei(1, AL_BUFFER, m_soundBuffers[name]);
     alSourcei(1, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
     alSourcePlay(1);

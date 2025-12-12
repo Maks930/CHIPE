@@ -1,11 +1,11 @@
-//
-// Created by Maks930 on 15/11/2025.
-//
-
 #ifndef CHIPE_PREPROCESSOR_H
 #define CHIPE_PREPROCESSOR_H
 
 #include <string>
+
+/*
+* Skip comments  start witch ';'
+*/
 
 class Preprocessor {
 public:

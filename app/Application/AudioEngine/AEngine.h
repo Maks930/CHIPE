@@ -23,7 +23,8 @@ private:
 
     ALCdevice* device;
     ALCcontext* context;
-    std::vector<u32> m_sources;
+    //std::vector<u32> m_sources;
+    u32 source;
     std::map<std::string, ALuint> m_soundBuffers;
 
     void checkAlError(const std::string& msg) {
@@ -33,14 +34,7 @@ private:
         }
     }
     u32 findFreeSources() {
-        for (ALuint source : m_sources) {
-            ALint state;
-            alGetSourcei(source, AL_SOURCE_STATE, &state);
-            if (state != AL_PLAYING) {
-                return source;
-            }
-        }
-        return 0; // 0 means no free sources available
+        return 1; // 0 means no free sources available
     }
 
 public:
@@ -56,7 +50,7 @@ public:
 
     void generateAndLoadSineWave(const std::string& name, float frequencyHz, float durationSeconds = 2.0f, float amplitude = 0.5f, u32 SAMPLE_RATE = 44100);
 
-    void playSound(const std::string& name, bool loop);
+    void playSound(const std::string& name, bool loop=false);
 
 };
 

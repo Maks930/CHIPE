@@ -238,6 +238,9 @@ void Application::DrawEmu() {
 void Application::Emulate() {
     auto cur_target_frequency = m_settings.target_ips;
     std::chrono::duration<double> target_interval(1.0 / cur_target_frequency);
+
+    std::chrono::duration<double> sound_target_interval(1.0 / 60);
+    auto sound_next_time = clock::now() + sound_target_interval;
     
     auto next_time = clock::now() + target_interval;
     
@@ -259,25 +262,31 @@ void Application::Emulate() {
             m_chip8->emulateCycle();
             inst_c+=1;
         }
-        std::this_thread::sleep_until(next_time);
-        next_time += target_interval;
-        m_chip8->updateTimers();
+
+        auto current_time = clock::now();
+        if (current_time >= sound_next_time) {
+            sound_next_time += sound_target_interval;
+            m_chip8->updateTimers();
+        }
 
         if (m_chip8->playeSound()) {
             playSound();
         }
+
+        std::this_thread::sleep_until(next_time);
+        next_time += target_interval;
+
+        
     }
 }
 
 void Application::playSound()
 {
-    fmt::print("Sound Played\n");
     SoundEngine::instance().playSound("chip_tone", false);
 }
 
 void Application::loadProgramm(fs::path program_path)
 {
-
     m_running = false;
     m_pausedDraw = true;
     m_pausedEmu = true;

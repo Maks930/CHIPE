@@ -15,22 +15,13 @@
 #define NEXT {PC+=2;}
 #define SKIP {NEXT; PC+=2;}
 
-
-
 chip8::chip8() {
-    //std::memset(memory, 0, 4096);
     std::fill(memory, memory + 4096, 0);
-
-    //std::memcpy(memory+0x50, m_chip8_fontset, 80);
+    
     std::copy(m_chip8_fontset, m_chip8_fontset+80, memory+0x50);
-
-    //std::memset(V, 0, 16);
+    
     std::fill(V, V + 16, 0);
-
-    //std::memset(videMemory, 0, SW*SH);
     std::fill(videMemory, videMemory + (SW * SH), 0);
-
-    //std::memset(key_layout, 0, 16);
     std::fill(key_layout, key_layout + 16, 0);
 
     m_delayTimer = 0;
@@ -352,14 +343,10 @@ std::pair<u16, u16> chip8::emulateCycle() {
     ret_val.first = opcode;
     ret_val.second = PC;
 
-
-
-    // fmt::format("{:#X}:", PC);
     switch (opcode & 0xF000) {
         case 0x0000:
             switch (opcode & 0x0FFF) {
             case 0x00E0:
-                    //std::memset(videMemory, 0, SW*SH);
                     std::fill(videMemory, videMemory + (SW * SH), 0);
                     break;
                 case 0x00EE: // PC to top of the stack
@@ -668,7 +655,6 @@ std::pair<u16, u16> chip8::emulateCycle() {
 }
 
 void chip8::loadProgram(const u8 *program, const u32 size) {
-    //std::memcpy(memory+0x200, program, size);
     std::copy(program, program+size, memory+0x200);
 }
 
@@ -681,7 +667,6 @@ void chip8::emulate(const bool f) {
 void chip8::reset() {
     {
         std::lock_guard<std::mutex> lock(mutex);
-        //std::memset(key_layout, 0, 16);
         std::fill(key_layout, key_layout + 16, 0);
     }
 
@@ -699,7 +684,6 @@ void chip8::resetStack() {
 
 void chip8::resetRegisters() {
     std::lock_guard<std::mutex> lock(mutex);
-    //std::memset(V, 0, 16);
     std::fill(V, V + 16, 0);
     I = 0;
     m_delayTimer = 0;
@@ -708,7 +692,6 @@ void chip8::resetRegisters() {
 
 void chip8::resetMemory() {
     std::lock_guard<std::mutex> lock(mutex);
-    //std::memset(memory, 0, 4096);
     std::fill(memory, memory + 4096, 0);
     std::copy(m_chip8_fontset, m_chip8_fontset + 80, memory + 0x50);
 }

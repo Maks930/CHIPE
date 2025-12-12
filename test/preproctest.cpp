@@ -5,8 +5,8 @@
 
 TEST(Preprocessor, Case_Define) {
 
-    std::string in_data = "; Test Preprocessor\n%define M_PI 3.14 ; Define PI number\nLD V[0], M_PI";
-    std::string out_data = "LD V[0], 3.14";
+    std::string in_data = "; Test Preprocessor\ndb 0xFF ; Define 0xFF byte\ndw 0xFFAC";
+    std::string out_data = "db 0xFF\ndw 0xFFAC";
     std::string res_data = Preprocessor::preprocess(in_data);
 
     fmt::print("\nInput Data\n{}\n", in_data);
