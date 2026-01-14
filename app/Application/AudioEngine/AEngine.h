@@ -34,7 +34,7 @@ private:
         }
     }
     u32 findFreeSources() {
-        return 1; // 0 means no free sources available
+        return 1;
     }
 
 public:

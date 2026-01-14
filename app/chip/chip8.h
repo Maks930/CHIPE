@@ -10,8 +10,6 @@
 
 #include <Types.h>
 
-
-
 class chip8 {
 private:
     u8 memory[4096]{};
@@ -73,6 +71,7 @@ public:
     [[nodiscard]] u16 getPC() const { return PC; }
     [[nodiscard]] u8 getDT() const { return m_delayTimer; }
     [[nodiscard]] u8 getST() const { return m_soundTimer; }
+
     [[nodiscard]] std::array<bool,16> getKeyLayout() {
         std::lock_guard<std::mutex> lock(mutex);
         return std::to_array(key_layout);

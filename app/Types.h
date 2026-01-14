@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 15/11/2025.
-//
-
 #ifndef CHIPE_TYPES_H
 #define CHIPE_TYPES_H
 

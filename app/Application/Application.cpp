@@ -114,7 +114,7 @@ void Application::_drawGui() {
         m_breakPoints
     );
 
-    Guis::DrawKeyBindMenu(m_keyBind);
+    //Guis::DrawKeyBindMenu(m_keyBind);
     //Guis::DrawKeyTableMenu(m_chip8->getKeyLayout());
 
     //Guis::DrawBreakPointsMenu(m_breakPoints);
@@ -155,6 +155,7 @@ void Application::_drawGui() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+//TODO: Maybe delete
 void Application::Input() {
     while (m_window->isOpen() && m_runInput) {
         if (m_pausedInput) {
@@ -214,6 +215,7 @@ void Application::Input() {
     }
 }
 
+//TODO: Delete 
 void Application::DrawEmu() {
     while (m_runDraw) {
         if (m_pausedDraw) {
@@ -288,7 +290,7 @@ void Application::playSound()
 void Application::loadProgramm(fs::path program_path)
 {
     m_running = false;
-    m_pausedDraw = true;
+    //m_pausedDraw = true;
     m_pausedEmu = true;
 
 
@@ -311,14 +313,13 @@ void Application::loadProgramm(fs::path program_path)
     m_progInfo.size = size;
     m_progInfo.insts = size / 2;
 
-    m_pausedDraw = false;
+    //m_pausedDraw = false;
     m_pausedEmu = false;
 
 
 }
 
 Application::Application(int argc, char **argv) {
-    m_argv.assign(argv, argv+argc);
 
     if (fs::exists("./settings.ces")) {
         if (!loadSettingFrom(m_settings, "./settings.ces")) {
@@ -332,8 +333,8 @@ Application::Application(int argc, char **argv) {
     _initGui();
     _initEmulator();
 
-    m_inputThread = std::thread(&Application::Input, this);
-    m_drawThread = std::thread(&Application::DrawEmu, this);
+    //m_inputThread = std::thread(&Application::Input, this);
+    //m_drawThread = std::thread(&Application::DrawEmu, this);
     m_emuThread = std::thread(&Application::Emulate, this);
 
 }
@@ -356,9 +357,9 @@ Application::~Application() {
 
 int Application::exec() {
 
-    m_runInput = true;
+    //m_runInput = true;
     m_runEmu = true;
-    m_runDraw = true;
+    //m_runDraw = true;
         
 
     auto start = clock::now();
@@ -367,6 +368,18 @@ int Application::exec() {
     deltaTime = end-start;
 
     while (m_window->isOpen()) {
+
+        const auto m_drawSpaceE = reinterpret_cast<u32*>(m_drawSpace.data());
+
+        auto vm = m_chip8->getVideoMemory();
+        for (int i = 0; i < 64 * 48; i++) {
+            if (vm[i] == 0) {
+                m_drawSpaceE[i] = m_settings.background_color;
+            }
+            else {
+                m_drawSpaceE[i] = m_settings.foreground_color;
+            }
+        }
 
         start = end;
         m_window->processAllEvents();
@@ -392,11 +405,62 @@ int Application::exec() {
             m_step = false;
         }
 
+        while (std::optional e = m_window->pollEvent()) {
+            if (e->is<bde::system::Event::Closed>()) {
+                m_window->close();
+            }
+
+            if (const auto key = e->get_if<bde::system::Event::JustKeyReleased>()) {
+                i8 any_pressed = [](u32 code, std::array<u32, 16>& arr) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        if (arr.at(i) == code) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                    }(key->code, m_keyBind);
+
+                if (any_pressed != -1) {
+                    m_chip8->relKey((u8)any_pressed);
+                }
+            }
+            if (const auto key = e->get_if<bde::system::Event::JustKeyPressed>()) {
+                switch (key->code) {
+                case GLFW_KEY_ESCAPE:
+                    m_window->close();
+                    break;
+                case GLFW_KEY_TAB:
+                    m_running = !m_running;
+                    break;
+                case GLFW_KEY_F2:
+                    m_running = false;
+                    m_chip8->reset();
+                    m_currentProgramm.clear();
+                    break;
+                default:
+                    break;
+                }
+
+                i8 any_pressed = [](u32 code, std::array<u32, 16>& arr) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        if (arr.at(i) == code) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                    }(key->code, m_keyBind);
+
+                if (any_pressed != -1) {
+                    m_chip8->pressKey((u8)any_pressed);
+                }
+            }
+        }
+
     }
 
-    m_runInput = false;
+    //m_runInput = false;
     m_runEmu = false;
-    m_runDraw = false;
+    //m_runDraw = false;
 
     return 0;
 }

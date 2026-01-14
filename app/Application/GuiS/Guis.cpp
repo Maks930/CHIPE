@@ -91,7 +91,7 @@ void Guis::DrawSettingsMenu(settings *data) {
 void Guis::DrawEmulatorRegistersTable(const u8* data) {
     ImGui::Begin("Registers");
     if (ImGui::BeginTable("U8 Array Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        // Заголовки колонок
+
         ImGui::TableSetupColumn("Register");
         ImGui::TableSetupColumn("Hex");
         ImGui::TableSetupColumn("Dec");
@@ -101,15 +101,12 @@ void Guis::DrawEmulatorRegistersTable(const u8* data) {
         for (size_t i = 0; i < 16; ++i) {
             ImGui::TableNextRow();
 
-            // Индекс
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("V[%zu]", i);
 
-            // Шестнадцатеричное значение
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("0x%02X", data[i]);
 
-            // Десятичное значение
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("%u", data[i]);
         }
@@ -121,7 +118,7 @@ void Guis::DrawEmulatorRegistersTable(const u8* data) {
 void Guis::DrawEmulatorPointersTable(std::vector<std::pair<std::string, u32>> data) {
     ImGui::Begin("Pointers");
     if (ImGui::BeginTable("U8 Array Table", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        // Заголовки колонок
+		// Column headers
         ImGui::TableSetupColumn("Register");
         ImGui::TableSetupColumn("Hex");
         ImGui::TableSetupColumn("Dec");
@@ -131,15 +128,15 @@ void Guis::DrawEmulatorPointersTable(std::vector<std::pair<std::string, u32>> da
         for (size_t i = 0; i < data.size(); ++i) {
             ImGui::TableNextRow();
 
-            // Индекс
+			// Index
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("%s", data.at(i).first.c_str());
 
-            // Шестнадцатеричное значение
+			// hex value
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("0x%02X", data.at(i).second);
 
-            // Десятичное значение
+			// dec value
             ImGui::TableSetColumnIndex(2);
             ImGui::Text("%u", data.at(i).second);
         }
@@ -153,7 +150,7 @@ void Guis::DrawKeyTableMenu(std::array<bool, 16> layout)
 {
     ImGui::Begin("Keyboard Layout");
     if (ImGui::BeginTable("Keyboard Layout Table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-        // Заголовки колонок
+		// Column headers
         ImGui::TableSetupColumn("Keys");
         ImGui::TableSetupColumn("Pressed");
 
@@ -162,11 +159,11 @@ void Guis::DrawKeyTableMenu(std::array<bool, 16> layout)
         for (size_t i = 0; i < layout.size(); ++i) {
             ImGui::TableNextRow();
 
-            // Индекс
+            // Index
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("%x", i);
 
-            // Десятичное значение
+			// dec value
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%i", layout.at(i));
         }
@@ -310,8 +307,17 @@ void Guis::DrawResetMenu(std::function<void(bool, bool, bool)> callback)
 
 void Guis::DrawMemoryMap(std::array<u8, 4096> memory)
 {
+    //--
     void* dump = reinterpret_cast<void*>(memory.data());
     mem_edit.DrawWindow("Memory Dump", dump, 4096);
+
+    /*
+    u8* dump = new u8[4096];
+    std::copy(memory.data(), memory.data()+4096, dump);
+
+    mem_edit.DrawWindow("Memory Dump", (void*)dump, 4096);
+	delete[] dump;
+    */
 }
 
 void Guis::DisAsmMenu(std::vector<std::pair<std::pair<u16, u16>, std::string>> program, u32 PC, std::set<u16>& breakPoints) {
@@ -323,7 +329,7 @@ void Guis::DisAsmMenu(std::vector<std::pair<std::pair<u16, u16>, std::string>> p
 
 
         if (PC == techData.first) {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow text, for example
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
             f=true;
         } else if (dism == "UNKNOWN") {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));

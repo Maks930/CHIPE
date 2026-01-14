@@ -26,8 +26,8 @@ private:
 
     u32 renderTextureId{0};
 
-    std::thread m_inputThread;
-    std::thread m_drawThread;
+    std::thread m_inputThread; // TODO: Maybe delete
+    std::thread m_drawThread;  // TODO: Delete
     std::thread m_emuThread;
 
     std::atomic_bool m_running{false};

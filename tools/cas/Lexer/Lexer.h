@@ -138,7 +138,8 @@ public:
 
 	struct Mark { 
 		std::string idf;
-		auto operator <=>(const Mark&) const = default;
+		//u32 addr;
+		auto operator <=>(const Mark& mark) const = default;
 	};
 	struct Identifier { 
 		std::string idf;
@@ -165,15 +166,19 @@ public:
 		DB = 0,
 		DW,
 
-		CLS, RET, SYS, JP,
+		CLS, RET, JP, SYS,
 		CALL, SE, SNE, LD,
 		ADD, OR, AND, XOR,
 		SUB, SHR, SUBN, SHL,
-		RND, DRW, HLT,
+		RND, DRW, HLT, SKP, SKPN,
+
 	};
 
 	enum class Register : int {
-		V1=0, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF
+		V0=0, V1, V2, V3,
+		V4, V5, V6, V7,
+		V8, V9, VA, VB,
+		VC, VD, VE, VF,
 	};
 
 	using Token = std::variant<
@@ -182,21 +187,15 @@ public:
 		Keyword, Register
 	>;
 	static const std::unordered_map<std::string_view, Keyword> keywords;
+	static const std::unordered_map<std::string_view, Register> registers;
 private:
-	std::unordered_map<std::string, u16> m_marks;
 	std::vector<Lexer::Token> m_tokens;
 
-	
-
-	
 public:
-
 	Lexer() {};
 	~Lexer() {}
 
-
 	std::vector<Lexer::Token> processed(std::string_view& code);
-	std::unordered_map<std::string, u16> getMarksAddres(const std::vector<Lexer::Token>& tokens);
 };
 
 #endif //LEXER_H

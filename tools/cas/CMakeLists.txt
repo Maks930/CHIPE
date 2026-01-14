@@ -3,7 +3,7 @@ file(GLOB_RECURSE sources ${CMAKE_CURRENT_SOURCE_DIR}/*/*.cpp)
 
 
 add_library(cas_lib STATIC ${headers} ${sources})
-target_include_directories(cas_lib PUBLIC ./Preprocessor ./Lexer ./Utils)
+target_include_directories(cas_lib PUBLIC ./Preprocessor ./Lexer ./Utils ./Compiler)
 target_link_libraries(cas_lib fmt::fmt)
 
 add_executable(cas main.cpp)

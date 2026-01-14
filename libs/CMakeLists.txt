@@ -26,6 +26,6 @@ target_include_directories(imgui
         ./imgui
 )
 
-add_subdirectory(BDEngine)
+#add_subdirectory(BDEngine)
 
 set(GLM_BUILD_TESTS OFF)

@@ -1,7 +1,3 @@
-//
-// Created by Maks930 on 08/24/2025.
-//
-
 #ifndef BADENGINE_EVENT_H
 #define BADENGINE_EVENT_H
 

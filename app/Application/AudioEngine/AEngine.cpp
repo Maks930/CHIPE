@@ -47,15 +47,14 @@ void SoundEngine::setListenerPosition(float x, float y, float z)
 }
 
 void SoundEngine::generateAndLoadSineWave(const std::string& name, float frequencyHz, float durationSeconds, float amplitude, u32 SAMPLE_RATE) {
-    //const unsigned int SAMPLE_RATE = 44100; // Standard CD quality sample rate
     const unsigned int NUM_SAMPLES = static_cast<unsigned int>(SAMPLE_RATE * durationSeconds);
 
     std::vector<u16> samples(NUM_SAMPLES);
     for (unsigned int i = 0; i < NUM_SAMPLES; ++i) {
         float time = (float)i / (float)SAMPLE_RATE;
-        //// Formula: amplitude * sin(2 * PI * frequency * time)
+        // amplitude * sin(2 * PI * frequency * time)
         float angle = 2.0f * M_PI * frequencyHz * time;
-        //// Scale the float result (-1.0 to 1.0) to 16-bit integer range
+        // Scale the float result (-1.0 to 1.0) to 16-bit integer range
         samples[i] = static_cast<u16>(std::sin(angle) * 32767.0f * amplitude);
 
         // Calculate the value in the range [-1.0, 1.0]

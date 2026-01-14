@@ -9,8 +9,6 @@
 
 constexpr char comment_sym = ';';
 
-
-
 std::string Preprocessor::preprocess(const std::string &str) {
     std::string res = "";
     std::string source = str+"\n";

@@ -12,7 +12,7 @@ const std::unordered_map<std::string_view, Lexer::Keyword> Lexer::keywords = {
 
 		{"cls",		Keyword::CLS},
 		{"ret",		Keyword::RET},
-		{"sys",		Keyword::SYS},
+		{"sys",		Keyword::HLT},
 		{"jp",		Keyword::JP},
 		{"call",	Keyword::CALL},
 		{"se",		Keyword::SE},
@@ -21,7 +21,7 @@ const std::unordered_map<std::string_view, Lexer::Keyword> Lexer::keywords = {
 		{"mov",		Keyword::LD},
 		{"and",		Keyword::AND},
 		{"xor",		Keyword::XOR},
-		{"OR",		Keyword::OR},
+		{"or",		Keyword::OR},
 		{"add",		Keyword::ADD},
 		{"sub",		Keyword::SUB},
 		{"subn",	Keyword::SUBN},
@@ -31,7 +31,13 @@ const std::unordered_map<std::string_view, Lexer::Keyword> Lexer::keywords = {
 		{"drw",		Keyword::DRW},
 		{"hlt",		Keyword::HLT},
 		{"nop",		Keyword::HLT},
+		{"skp",		Keyword::SKP},
+		{"skpn",	Keyword::SKPN}
+};
 
+const std::unordered_map<std::string_view, Lexer::Register> Lexer::registers = {
+
+		{"V0",		Register::V0},
 		{"V1",		Register::V1},
 		{"V2",		Register::V2},
 		{"V3",		Register::V3},
@@ -59,11 +65,6 @@ const std::unordered_map<std::string_view, Lexer::Keyword> Lexer::keywords = {
 std::vector<Lexer::Token> Lexer::processed(std::string_view& code)
 {
 	std::vector<Lexer::Token> result;
-
-
-	
-
-
 	u32 line = 0;
 	u32 col = 0;
 	for (auto it = code.begin(); it != code.end(); it++) {
@@ -111,6 +112,7 @@ std::vector<Lexer::Token> Lexer::processed(std::string_view& code)
 
 
 		case '\n':
+			//result.push_back(Keyword::NL);
 			line++;
 			col = 0;
 			break;
@@ -124,6 +126,12 @@ std::vector<Lexer::Token> Lexer::processed(std::string_view& code)
 
 				if (auto keyword = keywords.find(valueString); keyword != keywords.end()) {
 					result.push_back(keyword->second);
+					it = std::prev(blank);
+					break;
+				}
+
+				if (auto regs = registers.find(valueString); regs != registers.end()) {
+					result.push_back(regs->second);
 					it = std::prev(blank);
 					break;
 				}
@@ -172,10 +180,4 @@ std::vector<Lexer::Token> Lexer::processed(std::string_view& code)
 	}
 
 	return result;
-}
-
-std::unordered_map<std::string, u16> Lexer::getMarksAddres(const std::vector<Lexer::Token>& tokens)
-{
-	int startAddr = 0x202; //Because 0x200 is jp _start
-	return std::unordered_map<std::string, u16>();
 }

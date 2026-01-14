@@ -12,7 +12,6 @@
 #include <functional>
 #include <filesystem>
 
-
 #include <imgui.h>
 #include <imfilebrowser.h>
 #include "imgui_memory_editor.h"
@@ -41,9 +40,7 @@ public:
     static void DrawProgramLoadMenu(ProgInfo& info, std::function<void(fs::path)> callback = nullptr);
 
     static void DrawResetMenu(std::function<void(bool, bool, bool)>);
-    static void DrawMemoryMap(std::array<u8, 4096> memory);
-    
-	
+    static void DrawMemoryMap(std::array<u8, 4096> memory); //TODO: not safe memory usage
 
     static void DisAsmMenu(std::vector<std::pair<std::pair<u16,u16>, std::string>> program, u32 PC,std::set<u16>& breakPoints);
 

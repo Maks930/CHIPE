@@ -8,7 +8,7 @@
 
 TEST(Preprocessor, Case_Define) {
 
-    std::string_view in_data = "_procedure:\nmov V2, V1\nadd V2, 5\nret\n\n_start:\nld V1, 0xEE\nsub V1, 3\ncall _procedure\njp _start + 2";
+    std::string_view in_data = "jp _start\n_procedure:\nsub V1, V2\nret\n\n_start:\nld V1, 0xFF\nld V2, 1\ncall _procedure\nhlt\njp _start + 4";
 
     Lexer lexer;
 
@@ -35,6 +35,17 @@ TEST(Preprocessor, Case_Define) {
 
             fmt::print("Keyword: {}\n", s);
         }
+        else if (const auto e = std::get_if<Lexer::Register>(&i)) {
+            std::string s = "";
+
+            for (auto [key, value] : Lexer::registers) {
+                if ((int)value == (int)(*e)) {
+                    s = key;
+                }
+            }
+
+            fmt::print("Register: {}\n", s);
+        }
         else if (const auto e = std::get_if<Lexer::Plus>(&i)) {
             fmt::print("PLUS\n");
         }
@@ -50,29 +61,42 @@ TEST(Preprocessor, Case_Define) {
 
     }fmt::print("Program\n");
 
+    // 0x1206 0x8125 0x00EE 0x61FF 0x6201 0x2202 0x0000 0x120A
     std::vector<Lexer::Token> expected{
-        Lexer::Mark{.idf = "_procedure"},
-        Lexer::Keyword::LD,
-        Lexer::Keyword::V2,
-        Lexer::Keyword::V1,
-        Lexer::Keyword::ADD,
-        Lexer::Keyword::V2,
-        Lexer::Integer{.value = 5},
-        Lexer::Keyword::RET,
-        Lexer::Mark{.idf = "_start"},
-        Lexer::Keyword::LD,
-        Lexer::Keyword::V1,
-        Lexer::Integer{.value = 0xEE},
+        Lexer::Keyword::JP,
+        Lexer::Identifier{.idf="_start"},
+        //Lexer::Keyword::NL,
+        Lexer::Mark{.idf="_procedure"},
+        //Lexer::Keyword::NL,
         Lexer::Keyword::SUB,
-        Lexer::Keyword::V1,
-        Lexer::Integer{.value = 3},
+        Lexer::Register::V1,
+        Lexer::Register::V2,
+        //Lexer::Keyword::NL,
+        Lexer::Keyword::RET,
+        //Lexer::Keyword::NL,
+        Lexer::Mark{.idf = "_start"},
+        //Lexer::Keyword::NL,
+        Lexer::Keyword::LD,
+        Lexer::Register::V1,
+        Lexer::Integer{.value=0xFF},
+        //Lexer::Keyword::NL,
+        Lexer::Keyword::LD,
+        Lexer::Register::V2,
+        Lexer::Integer{.value = 1},
+        //Lexer::Keyword::NL,
         Lexer::Keyword::CALL,
-        Lexer::Identifier{.idf = "_procedure"},
+        Lexer::Identifier{.idf="_procedure"},
+        //Lexer::Keyword::NL,
+        Lexer::Keyword::HLT,
+        //Lexer::Keyword::NL,
         Lexer::Keyword::JP,
         Lexer::Identifier{.idf = "_start"},
         Lexer::Plus{},
-        Lexer::Integer{.value = 2},
+        Lexer::Integer{.value=4},
+        //Lexer::Keyword::NL
     };
+    
+
     
 
     EXPECT_EQ(expected, processed);
