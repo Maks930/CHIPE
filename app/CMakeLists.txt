@@ -18,11 +18,12 @@ add_custom_target(copy_data
 )
 
 
-
 add_executable(CHIPE main.cpp ${sources} Application/GuiS/Guis.cpp Application/AudioEngine/AEngine.cpp)
 target_link_libraries(CHIPE system fmt::fmt imgui libglew_shared glfw OpenAL::OpenAL ${PRIVATE_LINKED_LIBS})
 add_dependencies(CHIPE copy_data)
 include_directories(.)
+
+target_link_options(CHIPE PRIVATE "-mwindows")
 
 target_compile_definitions(CHIPE PUBLIC
         APPLICATION_NAME="CHIP-8"
